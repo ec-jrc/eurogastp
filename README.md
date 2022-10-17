@@ -51,6 +51,24 @@ To start off, there is a Jupyter notebook with a full example in the Examples
 directory that you can follow along.
 
 
+## Dependencies
+
+eurogastp depends on the following 3rd-party Python packages:
+
+pandas      ->      BSD-3-Clause Licence
+numpy		->      BSD-3-Clause Licence
+requests    ->      Apache 2.0 Licence
+tqdm	    ->      MIT
+Python 		->      Python Software Foundation (PSF) License Agreement
+
+eurogastp does not contain any code from these packages, neither in original
+nor in modified form. They are merely software dependencies for the user to
+run eurogastp on her own machine.
+
+More details about the licenses of the 3rd-party software can be found in the
+attached [Notice.txt](Notice.txt).
+
+
 ## Copyright notice
 
 Copyright (C) 2022 European Union

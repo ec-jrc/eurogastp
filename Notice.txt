@@ -23,10 +23,10 @@ See the Licence for the specific language governing permissions and limitations 
 This product depends on software developed by third parties:
   
 pandas      ->      BSD-3-Clause Licence
-numpy		->      BSD-3-Clause Licence
+numpy       ->      BSD-3-Clause Licence
 requests    ->      Apache 2.0 Licence
-tqdm	    ->      MIT
-Python 		->      Python Software Foundation (PSF) License Agreement
+tqdm        ->      MIT
+Python      ->      Python Software Foundation (PSF) License Agreement
 
 ========================================================================================
 

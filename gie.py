@@ -70,7 +70,7 @@ def download_gie_alsi(start_date, end_date, api_key,
     
         Dataframe, with the columns explained as follows:
     
-        lngInventory : aggregated amount of LNG in the LNG tanks status at end
+        inventory    : aggregated amount of LNG in the LNG tanks status at end
                        of gas day [ 1e3 m^3 ]
         sendOut      : aggregated gas flow out of the LNG facility, send-out
                        during gas day [GWh/d]
@@ -78,6 +78,7 @@ def download_gie_alsi(start_date, end_date, api_key,
                        [1e3 m^3]
         dtrs         : declared total reference send-out (send-out capacity)
                        [GWh/d]
+        status       : data status (E: estimated, C: confirmed, N: no data)
     """
     headers = {"x-key": api_key}
     if proxy:
@@ -85,27 +86,42 @@ def download_gie_alsi(start_date, end_date, api_key,
         os.environ['HTTP_PROXY'] = proxy
         os.environ['https_proxy'] = proxy
         os.environ['HTTPS_PROXY'] = proxy
+    
+    # API calls are now limited to 30 days.
+    # In case specified period exceeds 30 days, make multiple calls.
+    num_days = (end_date - start_date).days + 1
+    num_days
+
     lng_dict = {}
-    for c in tqdm(countries):
-        url = f'https://alsi.gie.eu/api/data/{c}?from={start_date}&till={end_date}'
+    for c in countries:
+        lng_dict[c] = pd.DataFrame()
+
+    for c, offset_start in tqdm(list(itertools.product(countries, range(0, num_days, 30)))):
+        offset_end = min(offset_start + 29, num_days - 1)
+        from_date = start_date + dt.timedelta(offset_start)
+        to_date = start_date + dt.timedelta(offset_end)
+        #print(c, from_date, to_date)
+        url = f'https://alsi.gie.eu/api?type=&country={c}&from={from_date}&to={to_date}'
         response = requests.get(url, headers=headers, timeout=timeout)
-        df1 = pd.DataFrame(response.json()).replace('-', np.nan)
-        df1['code'] = c
-        lng_dict[c] = df1
+        if response.status_code != 200:
+            print(f'Warning: Request {c},{from_date} resulted in HTML status code {response.status_code}.')
+        if 'message' in response.json():
+            print(f'{c},{from_date}: {response.json()["message"]}')
+        lng_dict[c] = lng_dict[c].append(pd.DataFrame(response.json()['data'])[::-1])
         time.sleep(delay)
+
     df = pd.concat(lng_dict.values())
-    float_cols = ['lngInventory', 'sendOut', 'dtmi', 'dtrs']
-    df[float_cols] = df[float_cols].astype(float)
-    df['gasDayStartedOn'] = pd.to_datetime(df['gasDayStartedOn'])
-    df = df.drop(['info'], axis=1)
-    df = df.set_index(['code', 'gasDayStartedOn'])
+    float_cols = ['inventory', 'sendOut', 'dtmi', 'dtrs']
+    df[float_cols] = df[float_cols].replace('-', '0').astype(float)
+    df['gasDayStart'] = pd.to_datetime(df['gasDayStart'])
+    df = df.drop(['name', 'url', 'info'], axis=1)
+    df = df.set_index(['code', 'gasDayStart'])
     df = df.sort_index()
     return df
 
-def download_gie_alsi_per_terminal(start_date, end_date, api_key, 
-                                   eics_file='topo/LSO_EIC.xlsx',
-                                   proxy=None, timeout=60, delay=0,
-                                   eics_engine=None):
+def download_gie_alsi_per_terminal(start_date, end_date, api_key,
+                                   eics_file='topo/Dataproviders.csv',
+                                   proxy=None, timeout=60, delay=0):
     """Download data from the GIE ALSI (LNG) transparency platform per LNG
     terminal.
     
@@ -119,7 +135,7 @@ def download_gie_alsi_per_terminal(start_date, end_date, api_key,
         api_key : personal API key; must be requested from GIE
         
         eics_file : a spreadsheet file containing the list of EIC code of each
-                    facility; default: topo/LSO_EIC.xlsx
+                    facility; default: topo/Dataproviders.csv
         
         proxy : if specified, set proxy to the given address; could include
                 username, password and port number
@@ -141,14 +157,8 @@ def download_gie_alsi_per_terminal(start_date, end_date, api_key,
                        [1e3 m^3]
         dtrs         : declared total referece send-out (send-out capacity)
                        [GWh/d]
+        status       : data status (E: estimated, C: confirmed, N: no data)
     """
-    if not start_date:
-        start_date = dt.date(2012, 1, 1)
-    if not end_date:
-        today = dt.date.today()
-        end_date = today - dt.timedelta(2)
-    url = f'https://alsi.gie.eu/api/data/21W0000000000419/GB*/21X0000000013554?from={start_date}&till={end_date}'
-    
     headers = {"x-key": api_key}
     if proxy:
         os.environ['http_proxy'] = proxy
@@ -156,29 +166,42 @@ def download_gie_alsi_per_terminal(start_date, end_date, api_key,
         os.environ['https_proxy'] = proxy
         os.environ['HTTPS_PROXY'] = proxy
     
-    eics = pd.read_excel(eics_file, index_col='Name', engine=eics_engine)
+    eics = pd.read_csv(eics_file, sep=';', index_col='Name')
     facs = eics[eics.Type == 'LNG Terminal'].drop('TVB (Virtual balancing LNG tank)')
-    float_cols = ['lngInventory', 'sendOut', 'dtmi', 'dtrs']
     
+    # API calls are now limited to 30 days.
+    # In case specified period exceeds 30 days, make multiple calls.
+    num_days = (end_date - start_date).days + 1
+    num_days
+
     lng_dict = {}
-    for row in tqdm(list(facs.iterrows())):
+    for i in facs.index:
+        lng_dict[i] = pd.DataFrame()
+    for row, offset_start in tqdm(list(itertools.product(facs.iterrows(), range(0, num_days, 30)))):
         i, fac = row
-        url = f'{fac.URL}?from={start_date}&till={end_date}'
+        offset_end = min(offset_start + 29, num_days - 1)
+        from_date = start_date + dt.timedelta(offset_start)
+        to_date = start_date + dt.timedelta(offset_end)
+        #print(i, from_date, to_date)
+        url = f'{fac.URL}&from={from_date}&to={to_date}'
+        #print(url)
         response = requests.get(url, headers=headers, timeout=timeout)
-        df1 = pd.DataFrame(response.json()).replace('-', np.nan)
-        df1[float_cols] = df1[float_cols].astype(float)
-        df1['gasDayStartedOn'] = pd.to_datetime(df1['gasDayStartedOn'])
-        df1 = df1.drop(['info'], axis=1)
+        if response.status_code != 200:
+            print(f'Warning: Request {i},{from_date} resulted in HTML status code {response.status_code}.')
+        if 'message' in response.json():
+            print(f'{i},{from_date}: {response.json()["message"]}')
+        df1 = pd.DataFrame(response.json()['data'])[::-1]
+        df1['gasDayStart'] = pd.to_datetime(df1['gasDayStart'])
         df1['Facility'] = i
         df1['Country'] = fac.Country[:2]
-        if i in lng_dict:  #fac.Country.endswith('*'):
-            lng_dict[i].update(df1)
-        else:
-            lng_dict[i] = df1
+        df1 = df1.set_index(['Country', 'Facility', 'gasDayStart'])
+        df1 = df1.drop(['name', 'code', 'url', 'info'], axis=1)
+        lng_dict[i] = lng_dict[i].append(df1)
         time.sleep(delay)
-    
+
     df = pd.concat(lng_dict.values())
-    df = df.set_index(['Country', 'Facility', 'gasDayStartedOn'])
+    float_cols = ['inventory', 'sendOut', 'dtmi', 'dtrs']
+    df[float_cols] = df[float_cols].replace('-', '0').astype(float)
     df = df.sort_index()
     return df
 
@@ -224,7 +247,7 @@ def download_gie_agsi(start_date, end_date, api_key,
                              [ GWh/d ]
         withdrawalCapacity : Declared total maximum technical withdrawal
                              (DTMTW) [ GWh/d ]
-        status             : either "confirmed" or "estimated"
+        status             : data status (E: estimated, C: confirmed, N: no data)
         trend              : Daily increase or decrease of gas in storage [ % ]
         full               : percentage of working gas volume in storage [ % ]
     """
@@ -249,7 +272,7 @@ def download_gie_agsi(start_date, end_date, api_key,
         from_date = start_date + dt.timedelta(offset_start)
         to_date = start_date + dt.timedelta(offset_end)
         #print(c, from_date, to_date)
-        url = f'https://agsi.gie.eu/api?type=&country={c}&from={from_date}&till={to_date}'
+        url = f'https://agsi.gie.eu/api?type=&country={c}&from={from_date}&to={to_date}'
         response = requests.get(url, headers=headers, timeout=timeout)
         if response.status_code != 200:
             print(f'Warning: Request {c},{from_date} resulted in HTML status code {response.status_code}.')
@@ -358,10 +381,9 @@ def update_gie_alsi_archive(start_date, end_date, api_key,
     df_new2.to_excel(archive_file, index_label=None)
 
 def update_gie_alsi_archive_per_terminal(start_date, end_date, api_key,
-                                         eics_file='topo/LSO_EIC.xlsx',
+                                         eics_file='topo/Dataproviders.csv',
                                          archive_file='GIE_TPs_Archive/GIE_ALSI_archive_per_terminal_GWh_d.xlsx',
-                                         proxy=None, timeout=60, delay=0,
-                                         eics_engine=None):
+                                         proxy=None, timeout=60, delay=0):
     """Update an existing GIE ALSI archive, or create a new one if it does not
     yet exist. Is overwriting data for existing dates and adding data for new
     dates.
@@ -374,7 +396,7 @@ def update_gie_alsi_archive_per_terminal(start_date, end_date, api_key,
         api_key : personal API key; must be requested from GIE
         
         eics_file : a spreadsheet file containing the list of EIC code of each
-                    facility; default: topo/LSO_EIC.xlsx
+                    facility; default: topo/Dataproviders.csv
         
         archive_file : path to where the archive shall be kept; default:
                        GIE_TPs_Archive/GIE_ALSI_archive_per_terminal_GWh_d.xlsx
@@ -393,7 +415,7 @@ def update_gie_alsi_archive_per_terminal(start_date, end_date, api_key,
     """
     df_new = download_gie_alsi_per_terminal(start_date, end_date, api_key=api_key,
                                             delay=delay, eics_file=eics_file,
-                                            proxy=proxy, eics_engine=eics_engine)
+                                            proxy=proxy)
     if os.path.exists(archive_file):
         df = pd.read_excel(archive_file, index_col=[0, 1, 2])
     else:
@@ -405,3 +427,15 @@ def update_gie_alsi_archive_per_terminal(start_date, end_date, api_key,
     os.makedirs(subdir_name, exist_ok=True)
     # save data
     df_new2.to_excel(archive_file, index_label=None)
+
+def load_lng(lng_file='GIE_TPs_Archive/GIE_ALSI_archive_GWh_d.xlsx'):
+    df_lng = pd.read_excel(lng_file, index_col=[0, 1])
+    return df_lng
+
+def load_lng_per_terminal(lng_term_file='GIE_TPs_Archive/GIE_ALSI_archive_per_terminal_GWh_d.xlsx'):
+    df_lng_term = pd.read_excel(lng_term_file, index_col=[0, 1, 2])
+    return df_lng_term
+    
+def load_ugs(ugs_file='GIE_TPs_Archive/GIE_AGSI_archive_GWh_d.xlsx'):
+    df_ugs = pd.read_excel(ugs_file, index_col=[0, 1])
+    return df_ugs

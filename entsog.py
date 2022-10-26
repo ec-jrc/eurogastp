@@ -61,16 +61,21 @@ ind_col_map = {
     "Actual interruption of interruptible capacity": "unplaninterruptint"
     }
 
-eu_nodes = ['AT', 'BE', 'BG', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FR', 'GR', 'HR',
-            'HU', 'IE', 'SK', 'PT', 'IT', 'PL', 'LU', 'MT', 'CY', 'LV', 'LT',
-            'FI', 'SI', 'RO', 'SE', 'NL', 'PLYAM', 'TBP', 'TAP']
+eu_nodes_hgas = ['AT', 'BE', 'BG', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FR', 'GR', 'HR',
+                 'HU', 'IE', 'SK', 'PT', 'IT', 'PL', 'LU', 'MT', 'CY', 'LV', 'LT',
+                 'FI', 'SI', 'RO', 'SE', 'NL', 'PLYAM', 'TBP', 'TAP', 'IGB', 'BBL']
+
+eu_nodes_lgas = ['BEL', 'DEL', 'FRL', 'NLL']
+
+eu_nodes = eu_nodes_hgas + eu_nodes_lgas
+
+non_eu_nodes = ['RU', 'BY', 'UA', 'TR', 'MA', 'DZ', 'TN', 'LY', 'UK', 'NO',
+                'BA', 'MK', 'MD', 'RS', 'CH', 'AZ', 'GE', 'ME', 'AL', 'RUKAL',
+                'IUK', 'TANAP']
 
 north_african_nodes = ['MA', 'DZ', 'TN', 'LY']
 
 russian_origin_nodes = ['RU', 'BY', 'UA', 'TR']
-
-non_eu_nodes = ['RU', 'BY', 'UA', 'TR', 'MA', 'DZ', 'TN', 'LY', 'UK', 'NO',
-                'BA', 'MK', 'MD', 'RS', 'CH', 'AZ', 'GE', 'ME', 'AL', 'RUKAL']
 
 balkan_nodes = ['BA', 'ME', 'RS', 'AL', 'MK']
 
@@ -356,7 +361,7 @@ def load_raw_file(filename):
         raw = pd.read_hdf(filename, key='raw')
     return raw
 
-def load_topo(topo_file='topo/ENTSOG_TP_Network_v2.xlsx',
+def load_topo(topo_file='topo/ENTSOG_TP_Network_v3.xlsx',
               sheets=['ITP', 'PRD', 'LNG', 'UGS', 'DIS', 'FNC', 'VTP']):
     """Load topology file.
     
@@ -368,7 +373,7 @@ def load_topo(topo_file='topo/ENTSOG_TP_Network_v2.xlsx',
     Parameters:
     
         topo_file : path to the topology file. Default:
-                    topo/ENTSOG_TP_Network_v2.xlsx
+                    topo/ENTSOG_TP_Network_v3.xlsx
         
         sheets    : sheets to load from the spreadsheet file, corresponding to
                     the network point type. By default, loading all types of
@@ -404,11 +409,11 @@ def get_corridors(topo):
                     the different inflow corridors
     """
     corridors = OrderedDict()
-    corridors['North Africa'] = topo[topo.from_node.isin(['DZ', 'MA', 'TN', 'LY']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    corridors['UK'] = topo[topo.from_node.isin(['UK']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    corridors['North Sea'] = topo[topo.from_node.isin(['NO']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    corridors['East'] = topo[topo.from_node.isin(['RU', 'BY', 'UA', 'TR']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    corridors['Caspian'] = topo[topo.from_node.isin(['AZ']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
+    corridors['North Africa'] = topo[topo.from_node.isin(['DZ', 'MA', 'TN', 'LY']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    corridors['UK'] = topo[topo.from_node.isin(['UK', 'IUK']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    corridors['North Sea'] = topo[topo.from_node.isin(['NO']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    corridors['East'] = topo[topo.from_node.isin(['RU', 'BY', 'UA', 'TR']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    corridors['Caspian'] = topo[topo.from_node.isin(['AZ', 'TANAP']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
     return corridors
 
 def get_routes(topo):
@@ -441,14 +446,14 @@ def get_routes(topo):
     routes = OrderedDict()
     routes['North Africa -> ES'] = topo[topo.from_node.isin(north_african_nodes) & topo.to_node.isin(['ES'])].edge_name.unique()
     routes['North Africa -> IT'] = topo[topo.from_node.isin(north_african_nodes) & topo.to_node.isin(['IT'])].edge_name.unique()
-    routes['UK -> EU'] = topo[topo.from_node.isin(['UK']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    routes['North Sea'] = topo[topo.from_node.isin(['NO']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
+    routes['UK -> EU'] = topo[topo.from_node.isin(['UK', 'IUK']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    routes['North Sea'] = topo[topo.from_node.isin(['NO']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
     routes['East -> Nord Stream'] = topo[topo.from_node.isin(['RU']) & topo.to_node.isin(['DE'])].edge_name.unique()
     routes['East -> Baltic+Finland'] = topo[topo.from_node.isin(russian_origin_nodes) & topo.to_node.isin(['FI', 'EE', 'LV', 'LT'])].edge_name.unique()
     routes['East -> Yamal'] = topo[topo.from_node.isin(['BY']) & topo.to_node.isin(['PL', 'PLYAM'])].edge_name.unique()
-    routes['East -> Ukraine'] = topo[topo.from_node.isin(['UA']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    routes['East -> Türkiye'] = topo[topo.from_node.isin(['TR']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
-    routes['Caspian'] = topo[topo.from_node.isin(['AZ']) & topo.to_node.isin(eu_nodes)].edge_name.unique()
+    routes['East -> Ukraine'] = topo[topo.from_node.isin(['UA']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    routes['East -> Türkiye'] = topo[topo.from_node.isin(['TR']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
+    routes['Caspian'] = topo[topo.from_node.isin(['AZ', 'TANAP']) & topo.to_node.isin(eu_nodes_hgas)].edge_name.unique()
     return routes
 
 def filter_data(df, indicator=None, operatorKey=None, pointKey=None,
@@ -815,3 +820,23 @@ def _is_iter(obj):
     """Checks if *obj* is iterable but not a string.
     """
     return not isinstance(obj, str) and hasattr(obj, '__iter__')
+
+def get_display_names(edge_names, topo):
+    """For the given *edge_names*, return the corresponding edge display names
+    as defined in the topology *topo* (field "edge_display_name"). Edge names
+    not existing in the topology are silently passed through.
+    """
+    cols = ['edge_name', 'edge_display_name']
+    nice_names = dict(topo[cols].drop_duplicates().values.tolist())
+    names = [nice_names.get(n, n) if nice_names.get(n, n) else n for n in edge_names]
+    return names
+
+def display(df, topo):
+    """Return version of the data frame *df* with the edge names in the column
+    headers replaced by the corresponding edge display name as defined in the
+    topology *topo* (field "edge_display_name"). Column headers not existing in
+    the topology are silently passed through.
+    """
+    df2 = df.copy()
+    df2.columns = get_display_names(df2.columns, topo)
+    return df2

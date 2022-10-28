@@ -56,9 +56,13 @@ directory that you can follow along.
 eurogastp depends on the following 3rd-party Python packages:
 
 pandas      ->      BSD-3-Clause Licence
+
 numpy		->      BSD-3-Clause Licence
+
 requests    ->      Apache 2.0 Licence
+
 tqdm	    ->      MIT
+
 Python 		->      Python Software Foundation (PSF) License Agreement
 
 eurogastp does not contain any code from these packages, neither in original
@@ -92,10 +96,8 @@ the Licence.
 This software was initially developed by staff of the Joint Research Centre
 (JRC) of the European Commission (EC), Petten, Netherlands.
  
-So far, main contributors are:
+Initial contributors are:
 
-- Daniel Jung (EC-JRC)
-- Jean-Francois Vuillaume (EC-JRC)
-- Ricardo Fernandez-Blanco Carramolino (EC-JRC)
-
-Contact: daniel.jung@ec.europa.eu
+- Daniel Jung (EC-JRC) <daniel.jung@ec.europa.eu>
+- Jean-Francois Vuillaume (EC-JRC) <Jean-Francois.VUILLAUME@ec.europa.eu>
+- Ricardo Fernandez-Blanco Carramolino (EC-JRC) <Ricardo.CARRAMOLINO@ec.europa.eu>

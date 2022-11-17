@@ -52,7 +52,7 @@ ind_col_map = {
     "Firm Technical": "firm",
     "Firm Booked": 'firmbooked',
     "Firm Available": "firmavail",
-    "Interruptible Total": "",
+    "Interruptible Total": "inttot",
     "Interruptible Booked": "intbooked",
     "Interruptible Available": "intavail",
     "Planned interruption of firm capacity": "planinterruptfirm",
@@ -84,7 +84,7 @@ def download_entsog_tp(start_date, end_date, topo, edges=None, dir_name=None,
                                    'Firm Booked', 'GCV', 'Nomination',
                                    'Renomination'],
                        proxy=None,
-                       delay=0, overwrite=False, max_points_per_request=3,
+                       delay=0, overwrite=False, max_points_per_request=1,
                        show_api_call=False):
     """Download current raw data from the ENTSOG Transparency Platform using its
     API. This will create a folder named ENTSOG_TP_data_YYYY-MM-DD in the
@@ -134,7 +134,9 @@ def download_entsog_tp(start_date, end_date, topo, edges=None, dir_name=None,
                 than 200 or 404), return 1, otherwise return 0.
     """
     col_ind_map = {y: x for x, y in ind_col_map.items()}
-    indicators = [col_ind_map.get(ind, ind) for ind in indicators]
+    indicators = [col_ind_map.get(ind, ind) for ind in indicators]  # long names
+    inds = [ind_col_map[i] for i in indicators]  # short names
+    
     if not edges is None and not _is_iter(edges):
         edges = [edges]
     
@@ -185,6 +187,9 @@ def download_entsog_tp(start_date, end_date, topo, edges=None, dir_name=None,
         #status_codes = {}
         for edge_name in tqdm(edges):
             npoints = topo[topo.edge_name == edge_name]
+            
+            # exclude network points where all indicator cols are zero
+            npoints = npoints[(npoints[inds] != 0).any(axis=1)]
             
             # need to do several requests if there are many network points in
             # this edge

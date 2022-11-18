@@ -288,8 +288,8 @@ def download_gie_agsi(start_date, end_date, api_key,
     df[float_cols] = df[float_cols].replace('-', '0').astype(float)
     df['gasDayStart'] = pd.to_datetime(df['gasDayStart'])
     df = df.drop(['name', 'url', 'info'], axis=1)
-    df[['consumption', 'workingGasVolume']] = \
-            df[['consumption', 'workingGasVolume']] * 1e3  # GWh
+    df[['gasInStorage', 'consumption', 'workingGasVolume']] = \
+            df[['gasInStorage', 'consumption', 'workingGasVolume']] * 1e3  # GWh
     df = df.set_index(['code', 'gasDayStart'])
     df = df.sort_index()
     return df

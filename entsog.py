@@ -71,7 +71,7 @@ eu_nodes = eu_nodes_hgas + eu_nodes_lgas
 
 non_eu_nodes = ['RU', 'BY', 'UA', 'TR', 'MA', 'DZ', 'TN', 'LY', 'UK', 'NO',
                 'BA', 'MK', 'MD', 'RS', 'CH', 'AZ', 'GE', 'ME', 'AL', 'RUKAL',
-                'IUK', 'TANAP']
+                'IUK', 'TANAP', 'NI']
 
 north_african_nodes = ['MA', 'DZ', 'TN', 'LY']
 

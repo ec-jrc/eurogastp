@@ -289,7 +289,7 @@ def load_raw(dir_name=None, year=None,
         for filename in tqdm(glob('{}/{}/*.xlsx'.format(dir_name2, year))):
             data = pd.read_excel(filename, usecols='C,E:G,I:K,M,Q,R',
                                  parse_dates=[1, 2])
-            raw = raw.append(data)
+            raw = pd.concat([raw, data])
     print('Loading data from {}...'.format(dir_name))
     for filename in tqdm(glob('{}/{}/*.xlsx'.format(dir_name, year))):
         try:
@@ -298,7 +298,7 @@ def load_raw(dir_name=None, year=None,
         except:
             print('Error: Failed to load raw file {}'.format(filename))
             raise
-        raw = raw.append(data)
+        raw = pd.concat([raw, data])
     #raw.drop_duplicates()
     raw.value = raw.value / 1e6  # convert to GWh/d / GWh/m3
     return raw
@@ -743,7 +743,7 @@ def select_and_aggregate(edges, topo, df, indicator, quiet=False):
             df2 = dfi[(dfi.pointKey == e.pointKey) &
                       (dfi.operatorKey == e.operatorKey) &
                       (dfi.directionKey == e.directionKey)]
-            dfs = dfs.append(df2)
+            dfs = pd.concat([dfs, df2])
         
         if len(dfs):  # if not empty
             if strategy == "take":
@@ -762,7 +762,7 @@ def select_and_aggregate(edges, topo, df, indicator, quiet=False):
 
             dfv = pd.DataFrame(val).reset_index()
             dfv['edge'] = edge
-            ind = ind.append(dfv)
+            ind = pd.concat([ind, dfv])
         else:
             if not quiet:
                 print('Warning: The edge {} '.format(edge) +

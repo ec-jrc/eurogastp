@@ -107,7 +107,7 @@ def download_gie_alsi(start_date, end_date, api_key,
             print(f'Warning: Request {c},{from_date} resulted in HTML status code {response.status_code}.')
         if 'message' in response.json():
             print(f'{c},{from_date}: {response.json()["message"]}')
-        lng_dict[c] = lng_dict[c].append(pd.DataFrame(response.json()['data'])[::-1])
+        lng_dict[c] = pd.concat([lng_dict[c], pd.DataFrame(response.json()['data'])[::-1]])
         time.sleep(delay)
 
     df = pd.concat(lng_dict.values())
@@ -196,7 +196,7 @@ def download_gie_alsi_per_terminal(start_date, end_date, api_key,
         df1['Country'] = fac.Country[:2]
         df1 = df1.set_index(['Country', 'Facility', 'gasDayStart'])
         df1 = df1.drop(['name', 'code', 'url', 'info'], axis=1)
-        lng_dict[i] = lng_dict[i].append(df1)
+        lng_dict[i] = pd.concat([lng_dict[i], df1])
         time.sleep(delay)
 
     df = pd.concat(lng_dict.values())
@@ -278,7 +278,7 @@ def download_gie_agsi(start_date, end_date, api_key,
             print(f'Warning: Request {c},{from_date} resulted in HTML status code {response.status_code}.')
         if 'message' in response.json():
             print(f'{c},{from_date}: {response.json()["message"]}')
-        ugs_dict[c] = ugs_dict[c].append(pd.DataFrame(response.json()['data'])[::-1])
+        ugs_dict[c] = pd.concat([ugs_dict[c], pd.DataFrame(response.json()['data'])[::-1]])
         time.sleep(delay)
 
     df = pd.concat(ugs_dict.values())
@@ -330,7 +330,7 @@ def update_gie_agsi_archive(start_date, end_date, api_key,
     else:
         df = pd.DataFrame()
     # take over dates from the old df that do not exist in the new one
-    df_new2 = df_new.append(df[~df.index.isin(df_new.index)]).sort_index()    
+    df_new2 = pd.concat([df_new, df[~df.index.isin(df_new.index)]]).sort_index()    
     # create directories along path if they do not yet exist
     subdir_name = os.path.dirname(archive_file)
     os.makedirs(subdir_name, exist_ok=True)
@@ -373,7 +373,7 @@ def update_gie_alsi_archive(start_date, end_date, api_key,
     else:
         df = pd.DataFrame()
     # take over dates from the old df that do not exist in the new one
-    df_new2 = df_new.append(df[~df.index.isin(df_new.index)]).sort_index()    
+    df_new2 = pd.concat([df_new, df[~df.index.isin(df_new.index)]]).sort_index()    
     # create directories along path if they do not yet exist
     subdir_name = os.path.dirname(archive_file)
     os.makedirs(subdir_name, exist_ok=True)
@@ -421,7 +421,7 @@ def update_gie_alsi_archive_per_terminal(start_date, end_date, api_key,
     else:
         df = pd.DataFrame()
     # take over dates from the old df that do not exist in the new one
-    df_new2 = df_new.append(df[~df.index.isin(df_new.index)]).sort_index()    
+    df_new2 = pd.concat([df_new, df[~df.index.isin(df_new.index)]]).sort_index()    
     # create directories along path if they do not yet exist
     subdir_name = os.path.dirname(archive_file)
     os.makedirs(subdir_name, exist_ok=True)

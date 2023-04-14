@@ -31,17 +31,25 @@ are usually Pandas DataFrames.
 
 ## Quick start
 
-If you want to download the latest version from GitLab for use or
-development purposes, we suggest to have git installed. Then you could
-simply clone the repository:
+We suggest to use `pip` to install eurogastp into your preferred Python
+environment:
+
+```bash
+pip install eurogastp
+```
+
+If you want to download the very latest version from GitLab for use or
+development purposes, you can of course also clone the repository directly
+using Git:
 
 ```bash
 git clone https://code.europa.eu/jrc-energy-security/eurogastp.git
 ```
 
-Finally, you have to make sure that the newly created folder "eurogastp" is
-added to your PYTHONPATH, so that you can `import eurogastp` inside your
+In that case, you have to make sure that the newly created folder "eurogastp"
+is added to your PYTHONPATH, so that you can `import eurogastp` inside your
 preferred Python environment.
+
 For development and application we have used the
 [Anaconda Python Distribution](https://www.anaconda.com/distribution/) and
 Python 3.8 on Windows 10. However, it should also work within other Python
@@ -61,9 +69,13 @@ numpy		->      BSD-3-Clause Licence
 
 requests    ->      Apache 2.0 Licence
 
-tqdm	    ->      MIT
+tqdm	    ->      MIT License
 
 Python 		->      Python Software Foundation (PSF) License Agreement
+
+openpyxl    ->      MIT License
+
+pytables    ->      BSD 3-Clause License
 
 eurogastp does not contain any code from these packages, neither in original
 nor in modified form. They are merely software dependencies for the user to
@@ -101,3 +113,14 @@ Initial contributors are:
 - Daniel Jung (EC-JRC) <daniel.jung@ec.europa.eu>
 - Jean-Francois Vuillaume (EC-JRC) <Jean-Francois.VUILLAUME@ec.europa.eu>
 - Ricardo Fernandez-Blanco Carramolino (EC-JRC) <Ricardo.CARRAMOLINO@ec.europa.eu>
+
+
+## How to contribute
+
+For ways to contribute please refer to the separate document [contributing.md](contributing.md).
+
+
+## References
+
+Jung, D., Vuillaume, J., Fernandez Blanco Carramolino, R., Filipe Calisto, H., Rodriguez Gomez, N. and Bolado Lavin, R., Tools for analysing the European natural gas system with public data – The Python package eurogastp, EUR 31281 EN, Publications Office of the European Union, Luxembourg, 2022, ISBN 978-92-76-58764-4, doi:10.2760/153669, JRC130771;
+[https://publications.jrc.ec.europa.eu/repository/handle/JRC130771](https://publications.jrc.ec.europa.eu/repository/handle/JRC130771).

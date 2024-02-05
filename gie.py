@@ -35,6 +35,7 @@ import requests
 import time
 import itertools
 from importlib import reload
+import sys
 
 st = pdb.set_trace
 
@@ -111,7 +112,16 @@ def download_gie_alsi(start_date, end_date, api_key,
         time.sleep(delay)
 
     df = pd.concat(lng_dict.values())
-    float_cols = ['inventory', 'sendOut', 'dtmi', 'dtrs']
+    
+    temp = df['inventory'].apply(pd.Series)
+    df['inventory'] = temp['gwh']
+    df['inventory_1000m3'] = temp['lng']
+    temp2 = df['dtmi'].apply(pd.Series)
+    df['dtmi'] = temp2['gwh']
+    df['dtmi_1000m3'] = temp2['lng']
+
+    float_cols = ['inventory', 'inventory_1000m3', 'dtmi', 'dtmi_1000m3', 'sendOut', 'dtrs',
+                  'contractedCapacity', 'availableCapacity', 'coveredCapacity']
     df[float_cols] = df[float_cols].replace('-', '0').astype(float)
     df['gasDayStart'] = pd.to_datetime(df['gasDayStart'])
     df = df.drop(['name', 'url', 'info'], axis=1)
@@ -191,7 +201,11 @@ def download_gie_alsi_per_terminal(start_date, end_date, api_key,
         if 'message' in response.json():
             print(f'{i},{from_date}: {response.json()["message"]}')
         df1 = pd.DataFrame(response.json()['data'])[::-1]
-        df1['gasDayStart'] = pd.to_datetime(df1['gasDayStart'])
+        try:
+            df1['gasDayStart'] = pd.to_datetime(df1['gasDayStart'])
+        except:
+            print(f'Warning: Could not convert gasDayStart to datetime for {i},{from_date}.')
+            continue
         df1['Facility'] = i
         df1['Country'] = fac.Country[:2]
         df1 = df1.set_index(['Country', 'Facility', 'gasDayStart'])
@@ -200,7 +214,16 @@ def download_gie_alsi_per_terminal(start_date, end_date, api_key,
         time.sleep(delay)
 
     df = pd.concat(lng_dict.values())
-    float_cols = ['inventory', 'sendOut', 'dtmi', 'dtrs']
+    
+    temp = df['inventory'].apply(pd.Series)
+    df['inventory'] = temp['gwh']
+    df['inventory_1000m3'] = temp['lng']
+    temp2 = df['dtmi'].apply(pd.Series)
+    df['dtmi'] = temp2['gwh']
+    df['dtmi_1000m3'] = temp2['lng']
+
+    float_cols = ['inventory', 'inventory_1000m3', 'dtmi', 'dtmi_1000m3', 'sendOut', 'dtrs',
+                  'contractedCapacity', 'availableCapacity']  # 'coveredCapacity' not available
     df[float_cols] = df[float_cols].replace('-', '0').astype(float)
     df = df.sort_index()
     return df

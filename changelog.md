@@ -3,6 +3,12 @@
 # eurogastp - Change Log
 
 
+## v0.1.3 (2024-02-05)
+
+- fix to support new indicators provided on ALSI (inventory in 10^3 m^3, DTMI in 10^3 m^3, Contracted Capacity, Available Capacity, Covered Capacity)
+- include latest ALSI EIC listing (list of LNG terminals)
+
+
 ## v0.1.2 (2023-04-14)
 
 - fix topology at Velke Kapusany (UA-SK)
